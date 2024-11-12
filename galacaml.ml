@@ -43,11 +43,20 @@ let get_texture_dimensions texture =
   let height = float_of_int (Texture.height texture) *. game_scale in
   (width, height)
 
-(* ----- Updating functions ----- *)
+let enemy_position_of_int i =
+  let m = i mod enemy_x_max in
+  let x = if m = 0 then 0. else if (i / enemy_x_max) mod 2 = 0 then 1. else (-1.) in
+  let y = if m = 0 then 1. else 0. in
+  Vector2.create (enemy_move_amount *. x) (enemy_move_amount *. y)
+
+let move_enemies game_state =
+  List.map (fun enemy -> { enemy with position = Vector2.add enemy.position @@ enemy_position_of_int game_state.swarm_position }) game_state.enemies  
+
 let instantiate_bullet position =
   let texture = load_texture "resources/bullet.png" in
-  { texture; scale = game_scale; position; velocity = Vector2.create 0. bullet_speed }
+  { texture; scale = game_scale; position; velocity = Vector2.create 0. bullet_speed }  
 
+(* ----- Updating functions ----- *)
 let update_bullet game_state =
   match game_state.bullet with
   | None ->
@@ -76,15 +85,6 @@ let update_player game_state =
       position = apply_velocity game_state.player.position game_state.player.velocity
     }
   }
-
-let enemy_position_of_int i =
-  let m = i mod enemy_x_max in
-  let x = if m = 0 then 0. else if (i / enemy_x_max) mod 2 = 0 then 1. else (-1.) in
-  let y = if m = 0 then 1. else 0. in
-  Vector2.create (enemy_move_amount *. x) (enemy_move_amount *. y)
-
-let move_enemies game_state =
-  List.map (fun enemy -> { enemy with position = Vector2.add enemy.position @@ enemy_position_of_int game_state.swarm_position }) game_state.enemies
 
 let update_enemies game_state =
   if game_state.enemy_movement_clock <= 0. then
@@ -173,7 +173,13 @@ let load_initial_game_state () =
     }
   in
   let enemies = generate_enemies enemy_count in
-  { player = player; enemies = enemies; swarm_position = 0; enemy_movement_clock = swarm_delay; bullet = None; score = 0 }
+  {
+    player = player;
+    enemies = enemies;
+    swarm_position = 0;
+    enemy_movement_clock = swarm_delay;
+    bullet = None; score = 0
+  }
 
 
 let setup () =
